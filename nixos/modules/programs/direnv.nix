@@ -140,11 +140,8 @@ in
       systemPackages = [
         # direnv has a fish library which automatically sources direnv for some reason
         # I don't see any harm in doing this if we're sourcing it with fish.interactiveShellInit
-        (pkgs.symlinkJoin {
-          inherit (cfg.package) name;
-          paths = [ cfg.package ];
-          nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
-          postBuild = ''
+        cfg.package.overrideAttrs (old : {
+          postBuild = (old.postBuild or "") + ''
             wrapProgram "$out/bin/direnv" \
               --set-default 'DIRENV_CONFIG' '/etc/direnv'
             rm -rf "$out/share/fish"
