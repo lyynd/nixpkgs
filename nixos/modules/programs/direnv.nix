@@ -100,15 +100,13 @@ in
   config = lib.mkIf cfg.enable {
     programs = {
       direnv = {
-        finalPackage = pkgs.symlinkJoin {
-          inherit (cfg.package) name;
-          paths = [ cfg.package ];
-          # direnv has a fish library which automatically sources direnv for some reason
-          postBuild = ''
+        finalPackage = cfg.package.overrideAttrs (old : {
+          postBuild = (old.postBuild or "") + ''
+            wrapProgram "$out/bin/direnv" \
+              --set-default 'DIRENV_CONFIG' '/etc/direnv'
             rm -rf "$out/share/fish"
           '';
-          meta.mainProgram = "direnv";
-        };
+        });
         settings = lib.mkIf cfg.silent {
           global = {
             log_format = lib.mkDefault "-";
@@ -156,8 +154,6 @@ in
       systemPackages = [
         cfg.finalPackage
       ];
-
-      variables.DIRENV_CONFIG = "/etc/direnv";
 
       etc = {
         "direnv/direnv.toml" = lib.mkIf (cfg.settings != { }) {
